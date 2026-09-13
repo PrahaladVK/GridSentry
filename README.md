@@ -1,5 +1,7 @@
 # GridSentry
 
+![version](https://img.shields.io/badge/version-0.1.0-ffb703) ![license](https://img.shields.io/badge/license-MIT-3a86ff)
+
 **Occupancy-aware energy consumption forecasting for smart buildings** — Capstone Project(MIT-WPU).
 
 Forecasts a building's electricity use 1 hour, 24 hours, and 7 days ahead with a GRU + XGBoost ensemble, flags anomalies with a control-chart + autoencoder, and serves it through a FastAPI backend and React dashboard.
@@ -58,5 +60,10 @@ npm run dev
 ```
 
 Open `http://localhost:5173` — the frontend expects the API at `http://127.0.0.1:8000`.
+
+## Project info
+
+See [CHANGELOG.md](CHANGELOG.md) for release history, [CONTRIBUTING.md](CONTRIBUTING.md)
+for how to contribute, and [LICENSE](LICENSE) for terms of use.
 
 
