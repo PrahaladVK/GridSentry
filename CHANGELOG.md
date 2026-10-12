@@ -7,6 +7,15 @@ and this project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- The model training notebook now matches the app: the autoencoder uses the same five consumption
+  channels and severity rules, and new sections benchmark ARIMA, SVR and LightGBM and run an XGBoost
+  feature ablation. Both notebooks were re-run, so their saved outputs match the Model Lab
+- The preprocessing notebook writes the same columns as the backend and checks that the four zones add
+  up to the house total
+- Screenshots refreshed, and a Reports & Alerts screenshot added
+
 ### Planned
 
 - Move the readings from SQLite to a production time-series database

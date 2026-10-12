@@ -16,7 +16,9 @@ Forecasts a building's electricity use 1 hour, 24 hours, and 7 days ahead with a
 |---|---|
 | ![Anomaly Watch](docs/screenshots/anomalies.png) | ![Model Lab](docs/screenshots/model-lab.png) |
 
-![Recommendations](docs/screenshots/recommendations.png)
+| Recommendations | Reports & Alerts |
+|---|---|
+| ![Recommendations](docs/screenshots/recommendations.png) | ![Reports & Alerts](docs/screenshots/reports.png) |
 
 ## Data
 
@@ -39,7 +41,10 @@ is also available as a standalone, runnable notebook:
 
 A second notebook, [`notebooks/GridSentry_Model_Training.ipynb`](notebooks/GridSentry_Model_Training.ipynb),
 trains the same GRU + XGBoost ensemble and anomaly detector the app uses - for every floor and
-horizon - and compares the results against the base paper's published numbers (Anan et al., 2024).
+horizon - and scores them against ARIMA, SVR, LightGBM and persistence, runs a feature ablation, and
+compares the results against the base paper's published numbers (Anan et al., 2024). Both notebooks
+were run top to bottom and reproduce the numbers in the Model Lab. A full run takes about 10 minutes
+on a laptop CPU.
 
 ## What it implements
 
