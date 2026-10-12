@@ -1,8 +1,8 @@
 # GridSentry
 
-![version](https://img.shields.io/badge/version-0.1.0-ffb703) ![license](https://img.shields.io/badge/license-MIT-3a86ff)
+![version](https://img.shields.io/badge/version-0.3.0-ffb703) ![license](https://img.shields.io/badge/license-MIT-3a86ff)
 
-**Occupancy-aware energy consumption forecasting for smart buildings** — Capstone Project(MIT-WPU).
+**Occupancy-aware energy consumption forecasting for smart buildings** — Capstone project, MIT-WPU.
 
 Forecasts a building's electricity use 1 hour, 24 hours, and 7 days ahead with a GRU + XGBoost ensemble, flags anomalies with a control-chart + autoencoder, and serves it through a FastAPI backend and React dashboard.
 
@@ -32,6 +32,15 @@ The single real meter is split into 4 zones using each zone's own real room-sens
 
 `hvac_kwh`/`elevator_kwh` are `0` (this house has neither); `occupancy` is an inferred proxy, not a sensor reading. Once the real May-2016 timeline runs out, a scheduled tick keeps the dashboard live by replaying each floor's own reading from a week earlier with jitter.
 
+The same download → hourly resample → zone split pipeline, plus a full exploratory data analysis,
+is also available as a standalone, runnable notebook:
+[`notebooks/GridSentry_Preprocessing.ipynb`](notebooks/GridSentry_Preprocessing.ipynb)
+(open it in Colab or Jupyter). It saves its output to `notebooks/data/processed/gridsentry_readings.csv`.
+
+A second notebook, [`notebooks/GridSentry_Model_Training.ipynb`](notebooks/GridSentry_Model_Training.ipynb),
+trains the same GRU + XGBoost ensemble and anomaly detector the app uses - for every floor and
+horizon - and compares the results against the base paper's published numbers (Anan et al., 2024).
+
 ## What it implements
 
 - **Forecasting** — GRU + XGBoost ensemble, blended by validation RMSE, benchmarked against naive persistence, with SHAP explainability (`backend/app/models/`)
@@ -44,6 +53,23 @@ The single real meter is split into 4 zones using each zone's own real room-sens
 Architecture diagram: [`docs/GridSentry-Architecture.drawio`](docs/GridSentry-Architecture.drawio) ([PNG](docs/GridSentry-Architecture.png))
 
 ## Running it
+
+One command sets up and starts everything (venv, dependencies, database seed, both servers) and
+opens the dashboard in your browser:
+
+```powershell
+./run.ps1      # Windows
+```
+
+```bash
+./run.sh       # macOS / Linux
+```
+
+Re-running it is safe — it skips steps that are already done (existing venv, installed
+dependencies, seeded database) and just starts the servers.
+
+<details>
+<summary>Manual setup, if you'd rather run each step yourself</summary>
 
 ```bash
 # Backend
@@ -59,7 +85,28 @@ npm install
 npm run dev
 ```
 
+</details>
+
 Open `http://localhost:5173` — the frontend expects the API at `http://127.0.0.1:8000`.
+The interactive API docs are at `http://127.0.0.1:8000/docs`.
+
+## Tests
+
+```bash
+cd backend
+.venv/Scripts/pip install -r requirements-dev.txt
+.venv/Scripts/python -m pytest
+```
+
+The suite covers the metrics, feature engineering, the zone split, the anomaly detector, the
+ensemble and the REST API. It runs against a throwaway database (see `GRIDSENTRY_ARTIFACTS_DIR`
+below) and needs no network access, so it never touches your seeded data.
+
+## Configuration
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `GRIDSENTRY_ARTIFACTS_DIR` | `backend/artifacts` | Where the SQLite database and saved models live |
 
 ## Project info
 

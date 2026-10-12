@@ -11,9 +11,12 @@ backend and frontend running locally.
 ## Project layout
 
 - `backend/app/models/` — GRU + XGBoost forecasting ensemble and SHAP explainability
-- `backend/app/anomaly/` — control-chart + autoencoder anomaly detection
+- `backend/app/anomaly/` — control-chart + autoencoder anomaly detection, and detector evaluation
 - `backend/app/services/` — ingestion, forecasting, recommendation, and retraining logic
 - `backend/app/routers/` — the FastAPI REST endpoints
+- `backend/app/metrics.py` — shared regression-metrics computation
+- `backend/tests/` — pytest suite for the backend
+- `notebooks/` — standalone preprocessing/EDA and model-training notebooks
 - `frontend/src/pages/` — the five dashboard pages
 - `frontend/src/components/` — shared UI components
 
@@ -25,7 +28,7 @@ backend and frontend running locally.
    modules on the backend rather than deep class hierarchies.
 4. Run the checks the CI workflow runs before opening a PR:
    ```bash
-   cd backend && python -m compileall app seed.py
+   cd backend && python -m compileall app seed.py && python -m pytest
    cd frontend && npm run lint && npm run build
    ```
 5. Open a pull request describing what changed and why.

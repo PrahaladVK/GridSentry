@@ -2,8 +2,11 @@
 backend/.venv/
 backend/artifacts/
 backend/app/data/raw/
+notebooks/data/raw/
 __pycache__/
 *.pyc
+.ipynb_checkpoints/
+.pytest_cache/
 
 # Node
 frontend/node_modules/
@@ -11,5 +14,6 @@ frontend/dist/
 
 # Editor / OS
 .vscode/
+*.code-workspace
 .DS_Store
 Thumbs.db

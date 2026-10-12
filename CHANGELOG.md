@@ -13,6 +13,49 @@ and this project uses [Semantic Versioning](https://semver.org/).
 - Alert Dispatcher (rate-limited email/SMS on high-severity anomalies)
 - Report Builder (weekly PDF/CSV consumption and accuracy summary)
 
+## [0.3.0] - 2026-10-12
+
+### Added
+
+- A pytest suite for the backend covering the metrics, feature engineering, the zone split, the
+  anomaly detector, the ensemble and the REST API (52 tests, about 20 seconds, no network needed)
+- `GRIDSENTRY_ARTIFACTS_DIR` to point the database and saved models somewhere other than
+  `backend/artifacts`
+- CI now installs the dev requirements and runs the tests
+
+### Changed
+
+- API startup and shutdown moved to a FastAPI lifespan handler, since `on_event` is deprecated
+- A failed model save is now logged instead of being silently ignored
+- `seed.py` prints a start command that works on every platform
+- Version bumped to 0.3.0 across the API, frontend and README
+
+## [0.2.0] - 2026-09-15
+
+### Added
+
+- Standalone Colab/Jupyter notebook (`notebooks/GridSentry_Preprocessing.ipynb`) documenting the
+  raw-data download, hourly resampling, and zone-split preprocessing, with a full exploratory data
+  analysis (distributions, correlation matrix, diurnal/weekly patterns), saving its output to
+  `notebooks/data/processed/gridsentry_readings.csv`
+- A second notebook (`notebooks/GridSentry_Model_Training.ipynb`) that trains the same GRU +
+  XGBoost ensemble and control-chart + autoencoder anomaly detector the app uses, for every floor
+  and horizon, real SHAP explainability, and compares the results against the base paper's
+  published Table 8 - including a diagnostic experiment forecasting the reconstructed real
+  whole-building total (removing the synthetic per-zone split noise) to test how much of the
+  accuracy gap is a scale/noise artifact versus a genuine modeling gap
+- MSE, R², and adjusted R² alongside RMSE/MAE/MAPE for every trained model, matching the
+  full metric set the base paper (Anan et al., 2024) reports
+- A live Model Lab comparison table against the base paper's Model A/B/C results
+- Anomaly detection evaluation via synthetic spike injection, scored with precision/recall/F1
+- `run.ps1` / `run.sh` - one-command setup and launch for the whole stack
+- A simple/advanced toggle on the Model Lab page so non-technical users see plain-language
+  summaries by default
+
+### Changed
+
+- `ModelRun` records now track which floor and horizon they were trained for
+
 ## [0.1.0] - 2026-09-13
 
 ### Added
