@@ -7,6 +7,8 @@ import pandas as pd
 import torch
 from torch import nn
 
+from app.metrics import regression_metrics
+
 SEQ_FEATURES = ["total_kwh", "outdoor_temp_c", "occupancy"]
 
 
@@ -62,6 +64,7 @@ def train_gru(df: pd.DataFrame, horizon_steps: int, lookback: int = 72, epochs: 
     X_train, y_train = X[:split], y[:split]
     X_val, y_val = X[split:], y[split:]
 
+    torch.manual_seed(42)
     model = GRUForecaster(n_features=len(SEQ_FEATURES))
     opt = torch.optim.Adam(model.parameters(), lr=1e-3)
     loss_fn = nn.L1Loss()
@@ -92,7 +95,7 @@ def train_gru(df: pd.DataFrame, horizon_steps: int, lookback: int = 72, epochs: 
             val_pred = np.array([])
             val_true = np.array([])
 
-    metrics = _regression_metrics(val_true, val_pred)
+    metrics = regression_metrics(val_true, val_pred, len(SEQ_FEATURES))
     residual_std = float(np.std(val_true - val_pred)) if len(val_true) else float(std[0])
 
     return {
@@ -101,6 +104,8 @@ def train_gru(df: pd.DataFrame, horizon_steps: int, lookback: int = 72, epochs: 
         "lookback": lookback,
         "metrics": metrics,
         "residual_std": residual_std,
+        "val_pred": val_pred,
+        "val_true": val_true,
     }
 
 
@@ -120,12 +125,3 @@ def predict_latest(bundle: dict, df: pd.DataFrame) -> float:
     return float(scaler.inverse_target(pred_scaled))
 
 
-def _regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
-    if len(y_true) == 0:
-        return {"rmse": None, "mae": None, "mape": None}
-    err = y_true - y_pred
-    rmse = float(np.sqrt(np.mean(err**2)))
-    mae = float(np.mean(np.abs(err)))
-    denom = np.where(y_true == 0, 1e-6, y_true)
-    mape = float(np.mean(np.abs(err / denom)) * 100)
-    return {"rmse": rmse, "mae": mae, "mape": mape}

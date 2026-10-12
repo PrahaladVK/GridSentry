@@ -84,13 +84,34 @@ class ModelRun(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     building_id = Column(String, index=True, nullable=False)
+    floor = Column(Integer, index=True, nullable=True)
+    horizon = Column(String, nullable=True)
     version = Column(String, nullable=False)
     trained_at = Column(DateTime, default=datetime.utcnow)
     rmse = Column(Float)
+    mse = Column(Float)
     mae = Column(Float)
     mape = Column(Float)
+    r2 = Column(Float)
+    adj_r2 = Column(Float)
     baseline_rmse = Column(Float)
     active = Column(Boolean, default=True)
+
+
+class AnomalyEval(Base):
+    __tablename__ = "anomaly_evals"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    building_id = Column(String, index=True, nullable=False)
+    floor = Column(Integer, index=True, nullable=False)
+    evaluated_at = Column(DateTime, default=datetime.utcnow)
+    n_injected = Column(Integer)
+    true_positives = Column(Integer)
+    false_positives = Column(Integer)
+    false_negatives = Column(Integer)
+    precision = Column(Float)
+    recall = Column(Float)
+    f1 = Column(Float)
 
 
 def init_db():

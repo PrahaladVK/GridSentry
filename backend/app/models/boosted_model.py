@@ -6,6 +6,7 @@ import shap
 from xgboost import XGBRegressor
 
 from app.features.engineering import FEATURE_COLUMNS, make_supervised
+from app.metrics import regression_metrics
 
 
 def train_xgb(df: pd.DataFrame, horizon_steps: int):
@@ -24,13 +25,17 @@ def train_xgb(df: pd.DataFrame, horizon_steps: int):
     )
     model.fit(train[FEATURE_COLUMNS], train["target"])
 
+    n_features = len(FEATURE_COLUMNS)
     if len(val) > 0:
         val_pred = model.predict(val[FEATURE_COLUMNS])
-        metrics = _regression_metrics(val["target"].to_numpy(), val_pred)
-        baseline_metrics = _regression_metrics(val["target"].to_numpy(), val["naive_persistence"].to_numpy())
-        residual_std = float(np.std(val["target"].to_numpy() - val_pred))
+        val_true = val["target"].to_numpy()
+        metrics = regression_metrics(val_true, val_pred, n_features)
+        baseline_metrics = regression_metrics(val_true, val["naive_persistence"].to_numpy(), n_features)
+        residual_std = float(np.std(val_true - val_pred))
     else:
-        metrics = {"rmse": None, "mae": None, "mape": None}
+        val_pred = np.array([])
+        val_true = np.array([])
+        metrics = regression_metrics(val_true, val_pred, n_features)
         baseline_metrics = metrics
         residual_std = 0.5
 
@@ -41,6 +46,8 @@ def train_xgb(df: pd.DataFrame, horizon_steps: int):
         "baseline_metrics": baseline_metrics,
         "residual_std": residual_std,
         "latest_features": sup.iloc[[-1]][FEATURE_COLUMNS] if len(sup) else None,
+        "val_pred": val_pred,
+        "val_true": val_true,
     }
 
 
@@ -52,12 +59,3 @@ def predict_latest(bundle: dict, df: pd.DataFrame) -> float:
     return float(bundle["model"].predict(latest)[0])
 
 
-def _regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
-    if len(y_true) == 0:
-        return {"rmse": None, "mae": None, "mape": None}
-    err = y_true - y_pred
-    rmse = float(np.sqrt(np.mean(err**2)))
-    mae = float(np.mean(np.abs(err)))
-    denom = np.where(y_true == 0, 1e-6, y_true)
-    mape = float(np.mean(np.abs(err / denom)) * 100)
-    return {"rmse": rmse, "mae": mae, "mape": mape}

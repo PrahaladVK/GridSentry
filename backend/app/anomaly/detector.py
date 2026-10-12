@@ -38,6 +38,7 @@ def train_autoencoder(df: pd.DataFrame, control_flags: pd.Series, epochs: int = 
     std[std == 0] = 1.0
     scaled_normal = (normal_data - mean) / std
 
+    torch.manual_seed(42)
     model = Autoencoder(n_features=len(AE_FEATURES))
     opt = torch.optim.Adam(model.parameters(), lr=1e-3)
     loss_fn = nn.MSELoss()

@@ -3,6 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from app.features.engineering import FEATURE_COLUMNS
+from app.metrics import regression_metrics
 from app.models import boosted_model, lstm_model
 
 
@@ -36,11 +38,16 @@ def _blended_val_metrics(gru_bundle, xgb_bundle, w_gru, w_xgb):
     g, x = gru_bundle["metrics"], xgb_bundle["metrics"]
     if g["rmse"] is None or x["rmse"] is None:
         return x or g
-    return {
-        "rmse": round(w_gru * g["rmse"] + w_xgb * x["rmse"], 4),
-        "mae": round(w_gru * g["mae"] + w_xgb * x["mae"], 4),
-        "mape": round(w_gru * g["mape"] + w_xgb * x["mape"], 4),
-    }
+
+    gru_pred, xgb_pred = gru_bundle["val_pred"], xgb_bundle["val_pred"]
+    n = min(len(gru_pred), len(xgb_pred))
+    if n == 0:
+        return x or g
+
+    gru_tail, xgb_tail = gru_pred[-n:], xgb_pred[-n:]
+    y_true = xgb_bundle["val_true"][-n:]
+    blended_pred = w_gru * gru_tail + w_xgb * xgb_tail
+    return regression_metrics(y_true, blended_pred, len(FEATURE_COLUMNS))
 
 
 def predict(ensemble_bundle: dict, df: pd.DataFrame, z: float = 1.28):

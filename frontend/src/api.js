@@ -21,6 +21,8 @@ export const getModelRuns = () => client.get("/forecast/models").then((r) => r.d
 export const getAnomalies = (params = {}) =>
   client.get("/anomalies", { params }).then((r) => r.data);
 
+export const getAnomalyEvaluation = () => client.get("/anomalies/evaluation").then((r) => r.data);
+
 export const updateAnomalyStatus = (id, status) =>
   client.patch(`/anomalies/${id}`, { status }).then((r) => r.data);
 

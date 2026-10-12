@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import random
 from datetime import datetime, timedelta
 
@@ -9,11 +10,14 @@ import pandas as pd
 from sqlalchemy import select
 
 from app.anomaly.detector import detect as detect_anomalies
+from app.anomaly.evaluation import evaluate_detection
 from app.config import BUILDING_ID, FLOORS, HORIZONS, MODEL_DIR
-from app.db import Anomaly, Building, Forecast, ModelRun, Reading, get_session
+from app.db import Anomaly, AnomalyEval, Building, Forecast, ModelRun, Reading, get_session
 from app.models import ensemble as ensemble_mod
 from app.models.explain import top_features
 from app.services.recommendation import build_recommendations
+
+log = logging.getLogger(__name__)
 
 TICK_LOOKBACK = timedelta(days=7)
 TICK_JITTER_STD = 0.03
@@ -119,21 +123,41 @@ def train_all_models(building_id: str) -> list[dict]:
                 _MODEL_CACHE[(floor, horizon_name)] = bundle
                 try:
                     joblib.dump(bundle, _model_path(floor, horizon_name))
-                except Exception:
-                    pass
+                except Exception as exc:
+                    log.warning("could not persist model floor%s_%s: %s", floor, horizon_name, exc)
 
                 metrics = bundle["blended_metrics"]
                 run = ModelRun(
                     building_id=building_id,
+                    floor=floor,
+                    horizon=horizon_name,
                     version=datetime.utcnow().strftime("v%Y%m%d%H%M%S"),
                     rmse=metrics.get("rmse"),
+                    mse=metrics.get("mse"),
                     mae=metrics.get("mae"),
                     mape=metrics.get("mape"),
+                    r2=metrics.get("r2"),
+                    adj_r2=metrics.get("adj_r2"),
                     baseline_rmse=bundle["baseline_metrics"].get("rmse"),
                     active=True,
                 )
                 session.add(run)
                 summaries.append({"floor": floor, "horizon": horizon_name, **metrics})
+
+            evaluation = evaluate_detection(df)
+            session.add(
+                AnomalyEval(
+                    building_id=building_id,
+                    floor=floor,
+                    n_injected=evaluation["n_injected"],
+                    true_positives=evaluation["true_positives"],
+                    false_positives=evaluation["false_positives"],
+                    false_negatives=evaluation["false_negatives"],
+                    precision=evaluation["precision"],
+                    recall=evaluation["recall"],
+                    f1=evaluation["f1"],
+                )
+            )
         session.commit()
     finally:
         session.close()
@@ -376,11 +400,42 @@ def latest_model_runs() -> list[dict]:
     return [
         {
             "version": r.version,
+            "floor": r.floor,
+            "horizon": r.horizon,
             "trained_at": r.trained_at.isoformat(),
             "rmse": r.rmse,
+            "mse": r.mse,
             "mae": r.mae,
             "mape": r.mape,
+            "r2": r.r2,
+            "adj_r2": r.adj_r2,
             "baseline_rmse": r.baseline_rmse,
+        }
+        for r in rows
+    ]
+
+
+def latest_anomaly_evals() -> list[dict]:
+    session = get_session()
+    try:
+        rows = (
+            session.execute(select(AnomalyEval).order_by(AnomalyEval.evaluated_at.desc()).limit(len(FLOORS)))
+            .scalars()
+            .all()
+        )
+    finally:
+        session.close()
+    return [
+        {
+            "floor": r.floor,
+            "evaluated_at": r.evaluated_at.isoformat(),
+            "n_injected": r.n_injected,
+            "true_positives": r.true_positives,
+            "false_positives": r.false_positives,
+            "false_negatives": r.false_negatives,
+            "precision": r.precision,
+            "recall": r.recall,
+            "f1": r.f1,
         }
         for r in rows
     ]

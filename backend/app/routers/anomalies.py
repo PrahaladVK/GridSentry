@@ -11,6 +11,11 @@ def list_anomalies(floor: int | None = None, status: str | None = None, limit: i
     return forecast_service.get_anomalies(floor=floor, status=status, limit=limit)
 
 
+@router.get("/evaluation")
+def anomaly_evaluation():
+    return forecast_service.latest_anomaly_evals()
+
+
 @router.patch("/{anomaly_id}")
 def update_anomaly(anomaly_id: int, payload: AnomalyStatusUpdate):
     if payload.status not in {"open", "acknowledged", "resolved"}:
