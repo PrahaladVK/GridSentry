@@ -33,6 +33,14 @@ jobs:
       - name: Tests
         run: python -m pytest -q
 
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate compose file
+        run: docker compose config -q
+
   frontend:
     runs-on: ubuntu-latest
     defaults:

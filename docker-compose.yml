@@ -1,0 +1,32 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      GRIDSENTRY_CORS_ORIGINS: "http://localhost:8080"
+      # Optional alert channels, leave empty to only log alerts
+      GRIDSENTRY_SMTP_HOST: ${GRIDSENTRY_SMTP_HOST:-}
+      GRIDSENTRY_SMTP_PORT: ${GRIDSENTRY_SMTP_PORT:-587}
+      GRIDSENTRY_SMTP_USER: ${GRIDSENTRY_SMTP_USER:-}
+      GRIDSENTRY_SMTP_PASSWORD: ${GRIDSENTRY_SMTP_PASSWORD:-}
+      GRIDSENTRY_ALERT_EMAIL_TO: ${GRIDSENTRY_ALERT_EMAIL_TO:-}
+      GRIDSENTRY_SMS_WEBHOOK_URL: ${GRIDSENTRY_SMS_WEBHOOK_URL:-}
+      GRIDSENTRY_SMS_TO: ${GRIDSENTRY_SMS_TO:-}
+    volumes:
+      - gridsentry-data:/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  gridsentry-data:

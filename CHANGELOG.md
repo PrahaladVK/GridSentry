@@ -9,9 +9,30 @@ and this project uses [Semantic Versioning](https://semver.org/).
 
 ### Planned
 
-- LightGBM and ARIMA/SVR baseline comparisons alongside the GRU + XGBoost ensemble
-- Alert Dispatcher (rate-limited email/SMS on high-severity anomalies)
-- Report Builder (weekly PDF/CSV consumption and accuracy summary)
+- Move the readings from SQLite to a production time-series database
+
+## [0.4.0] - 2026-10-12
+
+### Added
+
+- Comparison models: ARIMA(2,0,1), SVR and LightGBM are trained next to the ensemble and scored on
+  the same validation window as XGBoost, the GRU, the ensemble and naive persistence. Results are
+  stored per floor and horizon, served at `GET /forecast/benchmark` and shown in the Model Lab
+- Alert dispatcher: new high-severity anomalies are sent by email (SMTP) and/or SMS (webhook), with
+  one alert per floor per cooldown window and an hourly cap for the building. Every attempt is
+  kept in an alert log (`/alerts`, `/alerts/settings`, `/alerts/test`, `/alerts/dispatch`)
+- Report builder: weekly summary of consumption against the previous week, anomalies, forecast
+  accuracy and current models, as JSON, CSV or PDF (`/reports/weekly`), saved automatically every
+  Monday at 06:00 and on demand (`/reports/generate`, `/reports/saved`)
+- Reports & Alerts page in the dashboard with downloads, the weekly table and the alert log
+- Dockerfiles for the backend and frontend and a `docker-compose.yml` that seeds itself on first start
+- `GRIDSENTRY_CORS_ORIGINS`, `VITE_API_URL` and the alert settings as environment variables
+- 22 more backend tests (74 in total) for the comparison models, the dispatcher and the reports
+
+### Changed
+
+- Training now also benchmarks the comparison models, so a full retrain takes a little longer
+- Version bumped to 0.4.0 across the API, frontend and README
 
 ## [0.3.0] - 2026-10-12
 

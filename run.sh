@@ -20,7 +20,7 @@ echo "Installing backend dependencies..."
 "$venv_python" -m pip install -q -r "$backend/requirements.txt"
 
 if [ ! -f "$backend/artifacts/gridsentry.db" ]; then
-  echo "Seeding database and training models (first run, ~1-2 min)..."
+  echo "Seeding database and training models (first run, a few minutes)..."
   (cd "$backend" && "$venv_python" seed.py)
 fi
 

@@ -15,7 +15,7 @@ Write-Host "Installing backend dependencies..."
 
 $dbPath = Join-Path $backend "artifacts\gridsentry.db"
 if (-not (Test-Path $dbPath)) {
-    Write-Host "Seeding database and training models (first run, ~1-2 min)..."
+    Write-Host "Seeding database and training models (first run, a few minutes)..."
     Push-Location $backend
     & $venvPython seed.py
     Pop-Location
