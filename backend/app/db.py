@@ -114,6 +114,37 @@ class AnomalyEval(Base):
     f1 = Column(Float)
 
 
+class BaselineRun(Base):
+    __tablename__ = "baseline_runs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    building_id = Column(String, index=True, nullable=False)
+    floor = Column(Integer, index=True, nullable=False)
+    horizon = Column(String, nullable=False)
+    model = Column(String, nullable=False)
+    trained_at = Column(DateTime, default=datetime.utcnow)
+    rmse = Column(Float)
+    mse = Column(Float)
+    mae = Column(Float)
+    mape = Column(Float)
+    r2 = Column(Float)
+    adj_r2 = Column(Float)
+
+
+class AlertLog(Base):
+    __tablename__ = "alert_log"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    building_id = Column(String, index=True, nullable=False)
+    floor = Column(Integer, index=True, nullable=False)
+    anomaly_id = Column(Integer, index=True, nullable=True)
+    channel = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    subject = Column(String, nullable=False)
+    detail = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
 def init_db():
     Base.metadata.create_all(engine)
 

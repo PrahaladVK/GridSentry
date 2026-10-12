@@ -47,3 +47,8 @@ def live_series(floor: int = Query(..., ge=min(FLOORS), le=max(FLOORS)), hours: 
 @router.get("/models")
 def model_runs():
     return forecast_service.latest_model_runs()
+
+
+@router.get("/benchmark")
+def model_benchmark():
+    return forecast_service.model_benchmark()

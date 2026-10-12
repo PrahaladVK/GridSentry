@@ -6,8 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import BUILDING_ID, CORS_ORIGINS
 from app.db import init_db
-from app.routers import anomalies, buildings, forecast, recommendations, system
+from app.routers import alerts, anomalies, buildings, forecast, recommendations, reports, system
 from app.services import forecast_service
+from app.services import reports as report_service
 
 _scheduler = BackgroundScheduler()
 
@@ -36,12 +37,20 @@ async def lifespan(_app: FastAPI):
         id="live_ingestion_tick",
         replace_existing=True,
     )
+    _scheduler.add_job(
+        report_service.save_weekly_report,
+        "cron",
+        day_of_week="mon",
+        hour=6,
+        id="weekly_report",
+        replace_existing=True,
+    )
     _scheduler.start()
     yield
     _scheduler.shutdown(wait=False)
 
 
-app = FastAPI(title="GridSentry API", version="0.3.0", lifespan=lifespan)
+app = FastAPI(title="GridSentry API", version="0.4.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -56,3 +65,5 @@ app.include_router(buildings.router)
 app.include_router(forecast.router)
 app.include_router(anomalies.router)
 app.include_router(recommendations.router)
+app.include_router(alerts.router)
+app.include_router(reports.router)

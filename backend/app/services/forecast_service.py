@@ -12,9 +12,11 @@ from sqlalchemy import select
 from app.anomaly.detector import detect as detect_anomalies
 from app.anomaly.evaluation import evaluate_detection
 from app.config import BUILDING_ID, FLOORS, HORIZONS, MODEL_DIR
-from app.db import Anomaly, AnomalyEval, Building, Forecast, ModelRun, Reading, get_session
+from app.db import Anomaly, AnomalyEval, BaselineRun, Building, Forecast, ModelRun, Reading, get_session
+from app.models import baselines as baselines_mod
 from app.models import ensemble as ensemble_mod
 from app.models.explain import top_features
+from app.services import alerts
 from app.services.recommendation import build_recommendations
 
 log = logging.getLogger(__name__)
@@ -143,6 +145,26 @@ def train_all_models(building_id: str) -> list[dict]:
                 )
                 session.add(run)
                 summaries.append({"floor": floor, "horizon": horizon_name, **metrics})
+
+                compared = baselines_mod.benchmark(df, steps)
+                compared["xgboost"] = bundle["xgb"]["metrics"]
+                compared["gru"] = bundle["gru"]["metrics"]
+                compared["ensemble"] = metrics
+                for model_name, m in compared.items():
+                    session.add(
+                        BaselineRun(
+                            building_id=building_id,
+                            floor=floor,
+                            horizon=horizon_name,
+                            model=model_name,
+                            rmse=m.get("rmse"),
+                            mse=m.get("mse"),
+                            mae=m.get("mae"),
+                            mape=m.get("mape"),
+                            r2=m.get("r2"),
+                            adj_r2=m.get("adj_r2"),
+                        )
+                    )
 
             evaluation = evaluate_detection(df)
             session.add(
@@ -319,6 +341,11 @@ def run_anomaly_scan(building_id: str) -> int:
         session.commit()
     finally:
         session.close()
+    if total_new:
+        try:
+            alerts.dispatch_pending()
+        except Exception as exc:
+            log.warning("alert dispatch failed: %s", exc)
     return total_new
 
 
@@ -412,6 +439,32 @@ def latest_model_runs() -> list[dict]:
             "baseline_rmse": r.baseline_rmse,
         }
         for r in rows
+    ]
+
+
+def model_benchmark() -> list[dict]:
+    session = get_session()
+    try:
+        rows = session.execute(select(BaselineRun).order_by(BaselineRun.trained_at.desc(), BaselineRun.id.desc())).scalars().all()
+    finally:
+        session.close()
+    latest: dict[tuple[int, str, str], BaselineRun] = {}
+    for r in rows:
+        latest.setdefault((r.floor, r.horizon, r.model), r)
+    return [
+        {
+            "floor": r.floor,
+            "horizon": r.horizon,
+            "model": r.model,
+            "trained_at": r.trained_at.isoformat(),
+            "rmse": r.rmse,
+            "mse": r.mse,
+            "mae": r.mae,
+            "mape": r.mape,
+            "r2": r.r2,
+            "adj_r2": r.adj_r2,
+        }
+        for r in sorted(latest.values(), key=lambda x: (x.floor, list(HORIZONS).index(x.horizon), x.model))
     ]
 
 

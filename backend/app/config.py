@@ -5,6 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ARTIFACTS_DIR = Path(os.environ.get("GRIDSENTRY_ARTIFACTS_DIR", BASE_DIR / "artifacts"))
 DATA_DIR = ARTIFACTS_DIR / "data"
 MODEL_DIR = ARTIFACTS_DIR / "models"
+REPORT_DIR = ARTIFACTS_DIR / "reports"
 DB_PATH = ARTIFACTS_DIR / "gridsentry.db"
 
 for d in (DATA_DIR, MODEL_DIR, DB_PATH.parent):
@@ -31,4 +32,5 @@ AUTOENCODER_PERCENTILE = 98.5
 CORS_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    *[o.strip() for o in os.environ.get("GRIDSENTRY_CORS_ORIGINS", "").split(",") if o.strip()],
 ]
