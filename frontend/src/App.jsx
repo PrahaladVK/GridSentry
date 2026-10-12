@@ -7,6 +7,7 @@ import ForecastExplorer from "./pages/ForecastExplorer";
 import Anomalies from "./pages/Anomalies";
 import Recommendations from "./pages/Recommendations";
 import Models from "./pages/Models";
+import Reports from "./pages/Reports";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
             <Route path="/forecast" element={<ForecastExplorer />} />
             <Route path="/anomalies" element={<Anomalies />} />
             <Route path="/recommendations" element={<Recommendations />} />
+            <Route path="/reports" element={<Reports />} />
             <Route path="/models" element={<Models />} />
           </Route>
         </Routes>

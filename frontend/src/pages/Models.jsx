@@ -4,13 +4,25 @@ import Topbar from "../components/Topbar";
 import KpiCard from "../components/KpiCard";
 import { TopProgress } from "../components/Skeleton";
 import { useToast } from "../context/ToastContext";
-import { getAnomalyEvaluation, getModelRuns } from "../api";
+import { getAnomalyEvaluation, getBenchmark, getModelRuns } from "../api";
 
 const BASE_PAPER_MODELS = [
   { key: "A", label: "Model A (Temp + Occupancy)", rmse: 0.25374, mse: 0.06438, mae: 0.09306, mape: 0.04135, r2: 0.98901, adj_r2: 0.98899 },
   { key: "B", label: "Model B (Occupancy only)", rmse: 0.36216, mse: 0.13116, mae: 0.21339, mape: 0.10975, r2: 0.97762, adj_r2: 0.97757 },
   { key: "C", label: "Model C (Temperature only)", rmse: 0.29156, mse: 0.08501, mae: 0.15018, mape: 0.07802, r2: 0.98549, adj_r2: 0.98546 },
 ];
+
+const MODEL_LABELS = {
+  persistence: "Persistence (last value)",
+  arima: "ARIMA(2,0,1)",
+  svr: "SVR (RBF)",
+  lightgbm: "LightGBM",
+  xgboost: "XGBoost",
+  gru: "GRU",
+  ensemble: "GRU + XGBoost ensemble",
+};
+const MODEL_ORDER = ["persistence", "arima", "svr", "lightgbm", "xgboost", "gru", "ensemble"];
+const HORIZON_ORDER = ["1h", "24h", "7d"];
 
 const METRIC_ROWS = [
   { key: "rmse", label: "RMSE", digits: 4 },
@@ -31,14 +43,16 @@ export default function Models() {
   const { showToast } = useToast();
   const [runs, setRuns] = useState([]);
   const [evals, setEvals] = useState([]);
+  const [benchmark, setBenchmark] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
-    Promise.all([getModelRuns(), getAnomalyEvaluation()])
-      .then(([runData, evalData]) => {
+    Promise.all([getModelRuns(), getAnomalyEvaluation(), getBenchmark()])
+      .then(([runData, evalData, benchData]) => {
         setRuns(runData);
         setEvals(evalData);
+        setBenchmark(benchData);
       })
       .catch(() => showToast("Couldn't load model lab data — check the API.", "error"))
       .finally(() => setLoading(false));
@@ -75,6 +89,21 @@ export default function Models() {
   const avgImprovement = improvements.length
     ? improvements.reduce((a, b) => a + b, 0) / improvements.length
     : null;
+
+  const comparison = MODEL_ORDER.map((model) => {
+    const row = { model };
+    for (const h of HORIZON_ORDER) {
+      const rows = benchmark.filter((b) => b.model === model && b.horizon === h);
+      row[`${h}_rmse`] = avg(rows, "rmse");
+      row[`${h}_r2`] = avg(rows, "r2");
+    }
+    return row;
+  }).filter((row) => HORIZON_ORDER.some((h) => row[`${h}_rmse`] != null));
+  const bestRmse = {};
+  for (const h of HORIZON_ORDER) {
+    const vals = comparison.map((r) => r[`${h}_rmse`]).filter((v) => v != null);
+    bestRmse[h] = vals.length ? Math.min(...vals) : null;
+  }
 
   const avgRecall = evals.length ? evals.reduce((a, e) => a + e.recall, 0) / evals.length : null;
   const avgPrecision = evals.length ? evals.reduce((a, e) => a + e.precision, 0) / evals.length : null;
@@ -182,6 +211,58 @@ export default function Models() {
                 </tr>
               );
             })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 20 }}>
+        <div style={{ padding: "18px 22px 4px" }}>
+          <h3 style={{ fontSize: 16 }}>Model comparison</h3>
+          <p style={{ fontSize: 12.5, color: "var(--ink-faint)", marginTop: 4 }}>
+            Every model is scored on the same held-out validation window, averaged across the four floors. Lower RMSE
+            is better; the best value in each horizon is highlighted.
+          </p>
+        </div>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginTop: 10 }}>
+          <thead>
+            <tr style={{ background: "var(--surface-soft)", textAlign: "left" }}>
+              <th style={{ padding: "12px 16px", fontSize: 11.5, color: "var(--ink-soft)", textTransform: "uppercase" }}>
+                Model
+              </th>
+              {HORIZON_ORDER.flatMap((h) => [
+                <th key={`${h}-rmse`} style={{ padding: "12px 16px", fontSize: 11.5, color: "var(--ink-soft)", textTransform: "uppercase" }}>
+                  {h} RMSE
+                </th>,
+                <th key={`${h}-r2`} style={{ padding: "12px 16px", fontSize: 11.5, color: "var(--ink-soft)", textTransform: "uppercase" }}>
+                  {h} R²
+                </th>,
+              ])}
+            </tr>
+          </thead>
+          <tbody>
+            {comparison.map((row) => (
+              <tr key={row.model} className="data-row" style={{ borderTop: "1px solid var(--border)" }}>
+                <td style={{ padding: "10px 16px", fontWeight: 600 }}>{MODEL_LABELS[row.model]}</td>
+                {HORIZON_ORDER.flatMap((h) => {
+                  const best = row[`${h}_rmse`] != null && row[`${h}_rmse`] === bestRmse[h];
+                  return [
+                    <td key={`${h}-rmse`} style={{ padding: "10px 16px", fontWeight: best ? 800 : 400, color: best ? "#0a9f74" : "inherit" }}>
+                      {fmt(row[`${h}_rmse`], 4)}
+                    </td>,
+                    <td key={`${h}-r2`} style={{ padding: "10px 16px", color: "var(--ink-soft)" }}>
+                      {fmt(row[`${h}_r2`], 3)}
+                    </td>,
+                  ];
+                })}
+              </tr>
+            ))}
+            {comparison.length === 0 && !loading && (
+              <tr>
+                <td colSpan={7} style={{ padding: "16px", color: "var(--ink-faint)" }}>
+                  No comparison yet - trigger a retrain to benchmark the models.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

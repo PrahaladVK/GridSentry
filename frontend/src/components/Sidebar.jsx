@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { IconAlertTriangle, IconClipboard, IconFlask, IconGrid, IconShield, IconTrendingUp } from "./icons";
+import { IconAlertTriangle, IconClipboard, IconFileText, IconFlask, IconGrid, IconShield, IconTrendingUp } from "./icons";
 
 const NAV = [
   { to: "/", label: "Dashboard", Icon: IconGrid, end: true },
   { to: "/forecast", label: "Forecast", Icon: IconTrendingUp },
   { to: "/anomalies", label: "Anomalies", Icon: IconAlertTriangle },
   { to: "/recommendations", label: "Recommendations", Icon: IconClipboard },
+  { to: "/reports", label: "Reports & Alerts", Icon: IconFileText },
   { to: "/models", label: "Model Lab", Icon: IconFlask },
 ];
 
@@ -73,8 +74,8 @@ export default function Sidebar() {
           }}
         >
           <div style={{ fontSize: 12.5, color: "var(--ink-soft)", lineHeight: 1.5 }}>
-            Ensemble: <strong style={{ color: "var(--ink)" }}>GRU + XGBoost</strong>, blended
-            against a naive-persistence baseline. Anomalies via control chart + autoencoder.
+            Ensemble: <strong style={{ color: "var(--ink)" }}>GRU + XGBoost</strong>, benchmarked
+            against ARIMA, SVR, LightGBM and persistence. Anomalies via control chart + autoencoder.
           </div>
         </div>
       </div>

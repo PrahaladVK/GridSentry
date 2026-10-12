@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const client = axios.create({
-  baseURL: "http://127.0.0.1:8000",
+  baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8000",
   timeout: 20000,
 });
 
@@ -18,6 +18,8 @@ export const getLiveSeries = (floor, hours = 72) =>
 
 export const getModelRuns = () => client.get("/forecast/models").then((r) => r.data);
 
+export const getBenchmark = () => client.get("/forecast/benchmark").then((r) => r.data);
+
 export const getAnomalies = (params = {}) =>
   client.get("/anomalies", { params }).then((r) => r.data);
 
@@ -29,5 +31,19 @@ export const updateAnomalyStatus = (id, status) =>
 export const getRecommendations = () => client.get("/recommendations").then((r) => r.data);
 
 export const triggerRetrain = () => client.post("/retrain").then((r) => r.data);
+
+export const getWeeklyReport = () => client.get("/reports/weekly").then((r) => r.data);
+
+export const getSavedReports = () => client.get("/reports/saved").then((r) => r.data);
+
+export const generateReport = () => client.post("/reports/generate").then((r) => r.data);
+
+export const reportDownloadUrl = (format) => `${client.defaults.baseURL}/reports/weekly?format=${format}`;
+
+export const getAlerts = (limit = 30) => client.get("/alerts", { params: { limit } }).then((r) => r.data);
+
+export const getAlertSettings = () => client.get("/alerts/settings").then((r) => r.data);
+
+export const sendTestAlert = () => client.post("/alerts/test").then((r) => r.data);
 
 export default client;

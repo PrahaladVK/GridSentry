@@ -117,3 +117,14 @@ export function IconWrench(props) {
     </svg>
   );
 }
+
+export function IconFileText(props) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+      <polyline points="14 3 14 8 19 8" />
+      <line x1="9" y1="13" x2="15" y2="13" />
+      <line x1="9" y1="17" x2="15" y2="17" />
+    </svg>
+  );
+}
