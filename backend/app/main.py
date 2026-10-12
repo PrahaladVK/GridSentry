@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,27 +9,11 @@ from app.db import init_db
 from app.routers import anomalies, buildings, forecast, recommendations, system
 from app.services import forecast_service
 
-app = FastAPI(title="GridSentry API", version="0.1.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(system.router)
-app.include_router(buildings.router)
-app.include_router(forecast.router)
-app.include_router(anomalies.router)
-app.include_router(recommendations.router)
-
 _scheduler = BackgroundScheduler()
 
 
-@app.on_event("startup")
-def on_startup():
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
     init_db()
     _scheduler.add_job(
         lambda: forecast_service.train_all_models(BUILDING_ID),
@@ -51,8 +37,22 @@ def on_startup():
         replace_existing=True,
     )
     _scheduler.start()
-
-
-@app.on_event("shutdown")
-def on_shutdown():
+    yield
     _scheduler.shutdown(wait=False)
+
+
+app = FastAPI(title="GridSentry API", version="0.3.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(system.router)
+app.include_router(buildings.router)
+app.include_router(forecast.router)
+app.include_router(anomalies.router)
+app.include_router(recommendations.router)

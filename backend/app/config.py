@@ -1,9 +1,11 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "artifacts" / "data"
-MODEL_DIR = BASE_DIR / "artifacts" / "models"
-DB_PATH = BASE_DIR / "artifacts" / "gridsentry.db"
+ARTIFACTS_DIR = Path(os.environ.get("GRIDSENTRY_ARTIFACTS_DIR", BASE_DIR / "artifacts"))
+DATA_DIR = ARTIFACTS_DIR / "data"
+MODEL_DIR = ARTIFACTS_DIR / "models"
+DB_PATH = ARTIFACTS_DIR / "gridsentry.db"
 
 for d in (DATA_DIR, MODEL_DIR, DB_PATH.parent):
     d.mkdir(parents=True, exist_ok=True)

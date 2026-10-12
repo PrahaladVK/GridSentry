@@ -64,7 +64,7 @@ def seed():
     n = run_anomaly_scan(BUILDING_ID)
     print(f"Flagged {n} anomalies.")
 
-    print("Done. Start the API with: .venv/Scripts/uvicorn app.main:app --reload")
+    print("Done. Start the API with: python -m uvicorn app.main:app --reload")
 
 
 if __name__ == "__main__":
