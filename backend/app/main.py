@@ -50,7 +50,7 @@ async def lifespan(_app: FastAPI):
     _scheduler.shutdown(wait=False)
 
 
-app = FastAPI(title="GridSentry API", version="0.4.0", lifespan=lifespan)
+app = FastAPI(title="GridSentry API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

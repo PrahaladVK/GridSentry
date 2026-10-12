@@ -1,6 +1,6 @@
 # GridSentry
 
-![version](https://img.shields.io/badge/version-0.4.0-ffb703) ![license](https://img.shields.io/badge/license-MIT-3a86ff)
+![version](https://img.shields.io/badge/version-1.0.0-ffb703) ![license](https://img.shields.io/badge/license-MIT-3a86ff)
 
 **Occupancy-aware energy consumption forecasting for smart buildings** — Capstone project, MIT-WPU.
 

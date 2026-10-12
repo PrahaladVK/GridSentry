@@ -11,7 +11,7 @@ and this project uses [Semantic Versioning](https://semver.org/).
 
 - Move the readings from SQLite to a production time-series database
 
-## [0.4.0] - 2026-10-12
+## [1.0.0] - 2026-10-12
 
 ### Added
 
@@ -32,9 +32,11 @@ and this project uses [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - Training now also benchmarks the comparison models, so a full retrain takes a little longer
-- Version bumped to 0.4.0 across the API, frontend and README
+- First stable release: every feature planned in the project proposal is now implemented, apart from
+  the production time-series database
+- Version bumped to 1.0.0 across the API, frontend and README
 
-## [0.3.0] - 2026-10-12
+## [0.3.0] - 2026-10-05
 
 ### Added
 
